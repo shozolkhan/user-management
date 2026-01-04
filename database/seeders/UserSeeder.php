@@ -10,8 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $total = 500000;  // total records
-        $batch = 10000;   // batch size
+        $total = 500;  // total records
+        $batch = 100;   // batch size
 
         for ($i = 0; $i < $total; $i += $batch) {
             $users = [];
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
             }
 
             DB::table('users')->insert($users);
-            $this->command->info("Inserted: ".($i+$batch));
+            $this->command->info("Inserted: " . ($i + $batch));
         }
     }
 }

@@ -5,31 +5,41 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use App\Services\UserService;
 
 class UserController extends Controller
 {
+    protected $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+
+    // Show users page
     public function index()
     {
         return view('users.index');
     }
 
+    // DataTables JSON
     public function data(Request $request)
     {
-        $query = User::select(['id', 'name', 'email', 'created_at']);
+        $query = $this->userService->getAllUsers();
 
         return DataTables::of($query)
             ->addColumn('action', function ($user) {
                 return '
                     <button 
                         class="editBtn"
-                        data-id="'.$user->id.'"
-                        data-name="'.$user->name.'"
-                        data-email="'.$user->email.'"
+                        data-id="' . $user->id . '"
+                        data-name="' . $user->name . '"
+                        data-email="' . $user->email . '"
                     >
                         Edit
                     </button>
 
-                    <button onclick="deleteUser('.$user->id.')">
+                    <button onclick="deleteUser(' . $user->id . ')">
                         Delete
                     </button>
                 ';
@@ -38,6 +48,7 @@ class UserController extends Controller
             ->make(true);
     }
 
+    // Store new user
     public function store(Request $request)
     {
         $request->validate([
@@ -45,33 +56,28 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
         ]);
 
-        User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => bcrypt('password123'),
-        ]);
+        $this->userService->createUser($request->only('name', 'email'));
 
         return response()->json(['success' => true]);
     }
 
+    // Update existing user
     public function update(Request $request, User $user)
     {
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
-        $user->update([
-            'name'  => $request->name,
-            'email' => $request->email,
-        ]);
+        $this->userService->updateUser($user, $request->only('name', 'email'));
 
         return response()->json(['success' => true]);
     }
 
+    // Delete user
     public function destroy(User $user)
     {
-        $user->delete();
+        $this->userService->deleteUser($user);
 
         return response()->json(['success' => true]);
     }
